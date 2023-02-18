@@ -1,0 +1,24 @@
+name: Prepare Next Release
+concurrency: 
+    group: ${{ github.workflow }}-${{ github.ref }}
+    cancel-in-progress: true
+on:
+  milestone:
+    types: [created]
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    if: contains(github.event.milestone.description, 'Release')
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: 0 # required for jgit timestamp provider to work
+    - name: Set up JDK
+      uses: actions/setup-java@v3
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        cache: maven
+    - run: mvn org.eclipse.tycho:tycho-versions-plugin:4.0.0-SNAPSHOT:set-property --non-recursive -Dproperties=releaseVersion -DnewReleaseVersion=${{ github.event.milestone.title }}
+    - run: mvn org.eclipse.tycho:tycho-versions-plugin:4.0.0-SNAPSHOT:set-parent-version --non-recursive -DewParentVersion=${{ github.event.milestone.title }}-SNAPSHOT
