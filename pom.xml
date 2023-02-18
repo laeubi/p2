@@ -26,7 +26,7 @@
 
   <properties>
     <tycho.scmUrl>scm:git:https://github.com/eclipse-equinox/p2.git</tycho.scmUrl>
-    <releaseVersion>4.27.0</releaseVersion>
+    <releaseVersion>4.99</releaseVersion>
     <!-- Defines the default Qualifier if no format is given-->
     <!-- can be overriden with -Dtycho.buildqualifier.format=yyyyMMddHHmm for a dynamic qualifier or -Dqualifier=abcd for a static value -->
     <qualifier>-SNAPSHOT</qualifier>
