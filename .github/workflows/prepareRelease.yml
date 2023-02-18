@@ -9,11 +9,12 @@ on:
 jobs:
   prepare:
     runs-on: ubuntu-latest
-    if: contains(github.event.milestone.description, 'Release')
+  #  if: contains(github.event.milestone.description, 'Release')
     steps:
     - uses: actions/checkout@v3
       with:
         fetch-depth: 0 # required for jgit timestamp provider to work
+        ref: master
     - name: Set up JDK
       uses: actions/setup-java@v3
       with:
