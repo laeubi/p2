@@ -1,7 +1,4 @@
 name: Prepare Next Release
-concurrency: 
-    group: ${{ github.workflow }}-${{ github.ref }}
-    cancel-in-progress: true
 on:
   milestone:
     types: [created]
@@ -9,7 +6,7 @@ on:
 jobs:
   prepare:
     runs-on: ubuntu-latest
-#    if: contains(github.event.milestone.description, 'Release')
+    if: contains(github.event.milestone.description, 'Release')
     permissions:
       pull-requests: write
       contents: write
@@ -24,8 +21,10 @@ jobs:
         java-version: '17'
         distribution: 'temurin'
         cache: maven
-    - run: mvn -Pbuild-individual-bundles -ntp org.eclipse.tycho:tycho-versions-plugin:4.0.0-SNAPSHOT:set-property --non-recursive -Dproperties=releaseVersion -DnewReleaseVersion=${{ github.event.milestone.title }}
-#    - run: mvn -Pbuild-individual-bundles -ntp org.eclipse.tycho:tycho-versions-plugin:4.0.0-SNAPSHOT:set-parent-version --non-recursive -DewParentVersion=${{ github.event.milestone.title }}-SNAPSHOT
+    - name: Update CI Firendly Version Default
+      run: mvn -U -Pbuild-individual-bundles -ntp org.eclipse.tycho:tycho-versions-plugin:4.0.0-SNAPSHOT:set-property --non-recursive -Dproperties=releaseVersion -DnewReleaseVersion=${{ github.event.milestone.title }}.0
+    - name: Update parent pom version
+      run: mvn -U -Pbuild-individual-bundles -ntp org.eclipse.tycho:tycho-versions-plugin:4.0.0-SNAPSHOT:set-parent-version --non-recursive -DewParentVersion=${{ github.event.milestone.title }}.0-SNAPSHOT
     - name: Create Pull Request for Release ${{ github.event.milestone.title }}
       uses: peter-evans/create-pull-request@v4
       with:
@@ -33,3 +32,5 @@ jobs:
         branch: prepare-${{ github.event.milestone.title }}
         title: Prepare Release ${{ github.event.milestone.title }}
         body: A new Release Milstone was created, please review the changes and merge if appropriate.
+        delete-branch: true
+        reviewers: laeubi
