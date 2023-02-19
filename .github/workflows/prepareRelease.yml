@@ -24,7 +24,7 @@ jobs:
     - name: Update CI Firendly Version Default
       run: mvn -U -Pbuild-individual-bundles -ntp org.eclipse.tycho:tycho-versions-plugin:4.0.0-SNAPSHOT:set-property --non-recursive -Dproperties=releaseVersion -DnewReleaseVersion=${{ github.event.milestone.title }}.0
     - name: Update parent pom version
-      run: mvn -U -Pbuild-individual-bundles -ntp org.eclipse.tycho:tycho-versions-plugin:4.0.0-SNAPSHOT:set-parent-version --non-recursive -DewParentVersion=${{ github.event.milestone.title }}.0-SNAPSHOT
+      run: mvn -U -Pbuild-individual-bundles -ntp org.eclipse.tycho:tycho-versions-plugin:4.0.0-SNAPSHOT:set-parent-version --non-recursive -DnewParentVersion=${{ github.event.milestone.title }}.0-SNAPSHOT
     - name: Create Pull Request for Release ${{ github.event.milestone.title }}
       uses: peter-evans/create-pull-request@v4
       with:
