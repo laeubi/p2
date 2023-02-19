@@ -1,12 +1,12 @@
 name: Prepare Next Release
 on:
   milestone:
-    types: [created]
+    types: [created, edited]
 
 jobs:
   prepare:
     runs-on: ubuntu-latest
-    if: contains(github.event.milestone.description, 'Release')
+    if: contains(github.event.milestone.description, 'Release') && !github.event.milestone.closed
     permissions:
       pull-requests: write
       contents: write
@@ -34,3 +34,7 @@ jobs:
         body: A new Release Milstone was created, please review the changes and merge if appropriate.
         delete-branch: true
         reviewers: laeubi
+        committer: ${{ github.actor }} <${{ github.actor }}@users.noreply.github.com>
+        add-paths: |
+            pom.xml
+            *.MF
