@@ -35,7 +35,7 @@ jobs:
         body: A new Release Milstone was created, please review the changes and merge if appropriate.
         delete-branch: true
         reviewers: laeubi
-        milestone: ${{ github.event.milestone.id }}
+        milestone: ${{ github.event.milestone.number }}
         add-paths: |
             pom.xml
             *.MF
