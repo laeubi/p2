@@ -7,8 +7,8 @@ Bundle-Vendor: %providerName
 Bundle-Localization: plugin
 Export-Package: org.eclipse.equinox.internal.p2.operations;x-friends:="org.eclipse.pde.ui,org.eclipse.equinox.p2.ui",
  org.eclipse.equinox.p2.operations;version="2.0.0"
-Require-Bundle: org.eclipse.equinox.common;bundle-version="3.6.0",
- org.eclipse.core.jobs;bundle-version="3.5.0"
+Require-Bundle: org.eclipse.equinox.common;bundle-version="[3.19.100,4)",
+ org.eclipse.core.jobs;bundle-version="[3.15.400,4)"
 Bundle-RequiredExecutionEnvironment: JavaSE-17
 Bundle-ActivationPolicy: lazy
 Import-Package: org.eclipse.equinox.internal.p2.core.helpers,
