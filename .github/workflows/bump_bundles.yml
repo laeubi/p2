@@ -1,0 +1,22 @@
+name: Update Bundle Dependencies Version Range
+concurrency: 
+    group: ${{ github.workflow }}-${{ github.ref }}
+    cancel-in-progress: true
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+  schedule:
+    - cron:  '0 0 * * *'
+
+jobs:
+  update-manifest:
+    uses: laeubi/eclipse.platform.releng.aggregator/.github/workflows/updateBundles.yml@shared_update_bundles
+    with:
+      author: Eclipse Releng Bot <eclipse-releng-bot@eclipse.org>
+      maven-goals: -Dcompare-version-with-baselines.skip=false -Papi-check -Dtycho.bump-versions.increment=100 -Djgit.dirtyWorkingTree-platformDefault=warning clean verify
+      push-to-fork: laeubi/p2
+    secrets:
+      token: ${{ secrets.PR_PAT }}
+
