@@ -2,12 +2,12 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: %pluginName
 Bundle-SymbolicName: org.eclipse.equinox.p2.updatechecker;singleton:=true
-Bundle-Version: 1.4.300.qualifier
+Bundle-Version: 1.4.400.qualifier
 Bundle-Vendor: %providerName
 Bundle-Localization: plugin
 Export-Package: org.eclipse.equinox.internal.p2.updatechecker;x-internal:=true,
  org.eclipse.equinox.internal.provisional.p2.updatechecker;x-friends:="org.eclipse.equinox.p2.ui.sdk.scheduler"
-Require-Bundle: org.eclipse.equinox.common;bundle-version="[3.3.0,4.0)"
+Require-Bundle: org.eclipse.equinox.common;bundle-version="[3.19.100,4.0.0)"
 Service-Component: OSGI-INF/updatechecker.xml
 Bundle-RequiredExecutionEnvironment: JavaSE-17
 Bundle-ActivationPolicy: lazy
