@@ -1,0 +1,19 @@
+name: Update Bundle Dependencies Version Range
+concurrency: 
+    group: ${{ github.workflow }}-${{ github.ref }}
+    cancel-in-progress: true
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+  schedule:
+    - cron:  '0 0 * * *'
+
+jobs:
+  update-manifest:
+    uses: laeubi/eclipse.platform.releng.aggregator/.github/workflows/checkDependencies.yml@shared_check_dependencies
+    with:
+      author: Eclipse Releng Bot <eclipse-releng-bot@eclipse.org>
+    secrets:
+      token: ${{ secrets.PR_PAT }}
