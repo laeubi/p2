@@ -1,16 +1,20 @@
-name: Check Bundle Dependencies Version Range
+name: Perform Code Clean
 concurrency: 
     group: ${{ github.workflow }}-${{ github.ref }}
     cancel-in-progress: true
 on:
+  pull_request:
+    branches: [ master ]
   workflow_dispatch:
   schedule:
     - cron:  '0 0 * * *'
 
 jobs:
   check-dependencies:
-    uses: eclipse-platform/eclipse.platform.releng.aggregator/.github/workflows/checkDependencies.yml@master
+    uses: laeubi/eclipse.platform.releng.aggregator/.github/workflows/cleanCode.yml@cleanup_workflow
     with:
       author: Eclipse Equinox Bot <equinox-bot@eclipse.org>
+      do-quickfix: false
+      do-cleanups: true
     secrets:
-      token: ${{ secrets.EQUINOX_BOT_PAT }}
+      token: ${{ secrets.PR_PAT }}
