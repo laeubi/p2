@@ -15,4 +15,4 @@ jobs:
       do-quickfix: false
       do-cleanups: true
     secrets:
-      token: ${{ secrets.EQUINOX_BOT_PAT }}
+      token: ${{ secrets.PR_PAT }}
