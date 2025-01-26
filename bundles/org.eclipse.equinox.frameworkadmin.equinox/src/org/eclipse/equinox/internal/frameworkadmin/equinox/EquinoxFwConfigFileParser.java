@@ -352,6 +352,7 @@ public class EquinoxFwConfigFileParser {
 		return props;
 	}
 
+	@SuppressWarnings("deprecation")
 	private File findSharedConfigIniFile(File base, String sharedConfigurationArea) {
 		if (sharedConfigurationArea == null)
 			return null;

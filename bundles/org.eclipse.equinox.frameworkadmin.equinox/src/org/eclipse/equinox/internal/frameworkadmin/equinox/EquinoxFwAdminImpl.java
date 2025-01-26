@@ -35,13 +35,14 @@ public class EquinoxFwAdminImpl implements FrameworkAdmin {
 	private boolean runningFw = false;
 
 	private PlatformAdmin platformAdmin;
+	@SuppressWarnings("deprecation")
 	private StartLevel startLevelService;
 
 	public EquinoxFwAdminImpl() {
 		this(null, false);
 	}
 
-	//	private String configuratorManipulatorFactoryName = null;
+	// private String configuratorManipulatorFactoryName = null;
 
 	EquinoxFwAdminImpl(BundleContext context) {
 		this(context, false);
@@ -53,17 +54,21 @@ public class EquinoxFwAdminImpl implements FrameworkAdmin {
 		this.runningFw = runningFw;
 	}
 
-	EquinoxFwAdminImpl(String configuratorManipulatorFactoryName) throws InstantiationException, IllegalAccessException, ClassNotFoundException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException {
+	EquinoxFwAdminImpl(String configuratorManipulatorFactoryName)
+			throws InstantiationException, IllegalAccessException, ClassNotFoundException, IllegalArgumentException,
+			InvocationTargetException, NoSuchMethodException, SecurityException {
 		this.context = null;
 		this.active = true;
 		this.runningFw = false;
-		//		this.configuratorManipulatorFactoryName = configuratorManipulatorFactoryName;
+		// this.configuratorManipulatorFactoryName = configuratorManipulatorFactoryName;
 		loadConfiguratorManipulator(configuratorManipulatorFactoryName);
 	}
 
 	/**
 	 * DS component activator
-	 * @param aContext The bundle context
+	 * 
+	 * @param aContext
+	 *            The bundle context
 	 */
 	public void activate(BundleContext aContext) {
 		this.context = aContext;
@@ -98,17 +103,18 @@ public class EquinoxFwAdminImpl implements FrameworkAdmin {
 	}
 
 	/**
-	 * If both the vendor and the Bundle-Version in the manifest match,
-	 * return true. Otherwise false.
+	 * If both the vendor and the Bundle-Version in the manifest match, return true.
+	 * Otherwise false.
 	 *
-	 * @return flag true if the ManipulatorAdmin object can handle currently running fw launch.
+	 * @return flag true if the ManipulatorAdmin object can handle currently running
+	 *         fw launch.
 	 */
 	boolean isRunningFw() {
-		//TODO implementation for Eclipse.exe and for Equinox
+		// TODO implementation for Eclipse.exe and for Equinox
 		String fwVendor = context.getProperty(Constants.FRAMEWORK_VENDOR);
 		if (!"Eclipse".equals(fwVendor)) //$NON-NLS-1$
 			return false;
-		//TODO decide if this version can be supported by this bundle.
+		// TODO decide if this version can be supported by this bundle.
 		Dictionary<String, String> header = context.getBundle(0).getHeaders();
 		String versionSt = header.get(Constants.BUNDLE_VERSION);
 		Version version = new Version(versionSt);
@@ -116,21 +122,26 @@ public class EquinoxFwAdminImpl implements FrameworkAdmin {
 		if (value > 0) {
 			return true;
 		}
-		// TODO need to identify the version of eclipse.exe used for this launch, if used.
+		// TODO need to identify the version of eclipse.exe used for this launch, if
+		// used.
 		return false;
 	}
 
 	@Override
-	public Process launch(Manipulator manipulator, File cwd) throws IllegalArgumentException, FrameworkAdminRuntimeException, IOException {
-		//return new EclipseLauncherImpl(context, this).launch(manipulator, cwd);
+	public Process launch(Manipulator manipulator, File cwd)
+			throws IllegalArgumentException, FrameworkAdminRuntimeException, IOException {
+		// return new EclipseLauncherImpl(context, this).launch(manipulator, cwd);
 		return new EclipseLauncherImpl(this).launch(manipulator, cwd);
 	}
 
-	private void loadConfiguratorManipulator(String configuratorManipulatorFactoryName) throws InstantiationException, IllegalAccessException, ClassNotFoundException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException {
+	private void loadConfiguratorManipulator(String configuratorManipulatorFactoryName)
+			throws InstantiationException, IllegalAccessException, ClassNotFoundException, IllegalArgumentException,
+			InvocationTargetException, NoSuchMethodException, SecurityException {
 		if (configuratorManipulatorFactoryName == null)
 			this.configuratorManipulator = null;
 		else
-			this.configuratorManipulator = ConfiguratorManipulatorFactory.getInstance(configuratorManipulatorFactoryName);
+			this.configuratorManipulator = ConfiguratorManipulatorFactory
+					.getInstance(configuratorManipulatorFactoryName);
 		return;
 	}
 
@@ -138,7 +149,7 @@ public class EquinoxFwAdminImpl implements FrameworkAdmin {
 		this.platformAdmin = admin;
 	}
 
-	public void setStartLevel(StartLevel sl) {
+	public void setStartLevel(@SuppressWarnings("deprecation") StartLevel sl) {
 		this.startLevelService = sl;
 	}
 
