@@ -201,6 +201,30 @@ public class BundlesAction extends AbstractPublisherAction {
 		return MetadataFactory.createInstallableUnit(cu);
 	}
 
+	/**
+	 * Attempts to read the given file (or folder) as a bundle and creates an
+	 * {@link IInstallableUnit} describing it.
+	 * 
+	 * @param file the file to read as a bundle
+	 * @return an {@link Optional} describing the result, if anything goes wrong an
+	 *         empty optional is returned
+	 */
+	public static Optional<IInstallableUnit> createBundleIU(File file) {
+		try {
+			BundleDescription bundleDescription = BundlesAction.createBundleDescription(file);
+			if (bundleDescription != null) {
+				IArtifactKey key = BundlesAction.createBundleArtifactKey(bundleDescription.getSymbolicName(),
+						bundleDescription.getVersion().toString());
+				PublisherInfo publisherInfo = new PublisherInfo();
+				publisherInfo.setArtifactOptions(IPublisherInfo.A_INDEX);
+				return Optional.ofNullable(BundlesAction.createBundleIU(bundleDescription, key, publisherInfo));
+			}
+		} catch (BundleException | IOException | RuntimeException e) {
+			return Optional.empty();
+		}
+		return Optional.empty();
+	}
+
 	public static IInstallableUnit createBundleIU(BundleDescription bd, IArtifactKey key, IPublisherInfo info) {
 		return new BundlesAction(new BundleDescription[] { bd }).doCreateBundleIU(bd, key, info);
 	}
@@ -872,35 +896,24 @@ public class BundlesAction extends AbstractPublisherAction {
 
 	public static Dictionary<String, String> basicLoadManifest(File bundleLocation)
 			throws IOException, BundleException {
-		InputStream manifestStream = null;
-		ZipFile jarFile = null;
-		if ("jar".equalsIgnoreCase(IPath.fromOSString(bundleLocation.getName()).getFileExtension()) && bundleLocation.isFile()) { //$NON-NLS-1$
-			jarFile = new ZipFile(bundleLocation, ZipFile.OPEN_READ);
-			ZipEntry manifestEntry = jarFile.getEntry(JarFile.MANIFEST_NAME);
-			if (manifestEntry != null) {
-				manifestStream = jarFile.getInputStream(manifestEntry);
+		if ("jar".equalsIgnoreCase(IPath.fromOSString(bundleLocation.getName()).getFileExtension()) //$NON-NLS-1$
+				&& bundleLocation.isFile()) {
+			try (ZipFile jarFile = new ZipFile(bundleLocation, ZipFile.OPEN_READ);) {
+				ZipEntry manifestEntry = jarFile.getEntry(JarFile.MANIFEST_NAME);
+				if (manifestEntry != null) {
+					InputStream manifestStream = jarFile.getInputStream(manifestEntry);
+					return parseBundleManifestIntoModifyableDictionaryWithCaseInsensitiveKeys(manifestStream);
+				}
 			}
 		} else {
 			File manifestFile = new File(bundleLocation, JarFile.MANIFEST_NAME);
 			if (manifestFile.exists()) {
-				manifestStream = new BufferedInputStream(new FileInputStream(manifestFile));
+				try (InputStream manifestStream = new FileInputStream(manifestFile);) {
+					return parseBundleManifestIntoModifyableDictionaryWithCaseInsensitiveKeys(manifestStream);
+				}
 			}
 		}
-		try {
-			if (manifestStream != null) {
-				return parseBundleManifestIntoModifyableDictionaryWithCaseInsensitiveKeys(manifestStream);
-			}
-		} finally {
-			try {
-				if (jarFile != null)
-					jarFile.close();
-			} catch (IOException e2) {
-				// Ignore
-			}
-		}
-
 		return null;
-
 	}
 
 	private static Dictionary<String, String> parseBundleManifestIntoModifyableDictionaryWithCaseInsensitiveKeys(
