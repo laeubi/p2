@@ -154,6 +154,7 @@
 								<cleanup.replace_deprecated_calls>true</cleanup.replace_deprecated_calls>
 								<!-- Convert control statement bodies to block -->
 								<cleanup.use_blocks>true</cleanup.use_blocks>
+								<cleanup.always_use_blocks>true</cleanup.always_use_blocks>
 							</cleanUpProfile>
 						</configuration>
 					</execution>
