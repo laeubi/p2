@@ -292,11 +292,10 @@ public class VersionVector implements Comparable<VersionVector>, Serializable {
 			return true;
 		}
 
-		if (!(o instanceof VersionVector)) {
+		if (!(o instanceof VersionVector ov)) {
 			return false;
 		}
 
-		VersionVector ov = (VersionVector) o;
 		return equals(vector, padValue, ov.vector, ov.padValue);
 	}
 
