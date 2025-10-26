@@ -688,21 +688,23 @@ public class BundlesActionTest extends ActionTest {
 			String expectedVersion = testCase[2];
 
 			// Create a temporary test bundle with this BREE
-			File tempDir = new File(System.getProperty("java.io.tmpdir"), "bree-test-" + bree.replace('.', '_'));
-			File metaInfDir = new File(tempDir, "META-INF");
-			metaInfDir.mkdirs();
-
-			File manifestFile = new File(metaInfDir, "MANIFEST.MF");
-			try (java.io.FileWriter writer = new java.io.FileWriter(manifestFile)) {
-				writer.write("Manifest-Version: 1.0\n");
-				writer.write("Bundle-ManifestVersion: 2\n");
-				writer.write("Bundle-Name: Test " + bree + " BREE\n");
-				writer.write("Bundle-SymbolicName: test." + bree.replace('.', '_').replace('-', '_') + "\n");
-				writer.write("Bundle-Version: 1.0.0\n");
-				writer.write("Bundle-RequiredExecutionEnvironment: " + bree + "\n");
-			}
-
+			// Use createTempDirectory for better isolation and automatic cleanup
+			File tempDir = null;
 			try {
+				tempDir = java.nio.file.Files.createTempDirectory("bree-test-").toFile();
+				File metaInfDir = new File(tempDir, "META-INF");
+				metaInfDir.mkdirs();
+
+				File manifestFile = new File(metaInfDir, "MANIFEST.MF");
+				try (java.io.FileWriter writer = new java.io.FileWriter(manifestFile)) {
+					writer.write("Manifest-Version: 1.0\n");
+					writer.write("Bundle-ManifestVersion: 2\n");
+					writer.write("Bundle-Name: Test " + bree + " BREE\n");
+					writer.write("Bundle-SymbolicName: test." + bree.replace('.', '_').replace('-', '_') + "\n");
+					writer.write("Bundle-Version: 1.0.0\n");
+					writer.write("Bundle-RequiredExecutionEnvironment: " + bree + "\n");
+				}
+
 				IInstallableUnit iu = BundlesAction.createBundleIU(BundlesAction.createBundleDescription(tempDir), null,
 						new PublisherInfo());
 
@@ -733,8 +735,10 @@ public class BundlesActionTest extends ActionTest {
 				assertTrue("Filter should contain 'version' and '" + expectedVersion + "' for " + bree + ": " + filterString,
 						filterString.contains("version") && filterString.contains(expectedVersion));
 			} finally {
-				// Clean up temp directory
-				deleteDirectory(tempDir);
+				// Clean up temp directory - guaranteed to execute even on test failure
+				if (tempDir != null) {
+					deleteDirectory(tempDir);
+				}
 			}
 		}
 	}
@@ -748,21 +752,24 @@ public class BundlesActionTest extends ActionTest {
 		String[] futureVersions = {"JavaSE-30", "JavaSE-50", "JavaSE-100"};
 
 		for (String bree : futureVersions) {
-			File tempDir = new File(System.getProperty("java.io.tmpdir"), "bree-test-" + bree.replace('-', '_'));
-			File metaInfDir = new File(tempDir, "META-INF");
-			metaInfDir.mkdirs();
-
-			File manifestFile = new File(metaInfDir, "MANIFEST.MF");
-			try (java.io.FileWriter writer = new java.io.FileWriter(manifestFile)) {
-				writer.write("Manifest-Version: 1.0\n");
-				writer.write("Bundle-ManifestVersion: 2\n");
-				writer.write("Bundle-Name: Test " + bree + " BREE\n");
-				writer.write("Bundle-SymbolicName: test.future." + bree.replace('-', '_') + "\n");
-				writer.write("Bundle-Version: 1.0.0\n");
-				writer.write("Bundle-RequiredExecutionEnvironment: " + bree + "\n");
-			}
-
+			// Create a temporary test bundle with this BREE
+			// Use createTempDirectory for better isolation and automatic cleanup
+			File tempDir = null;
 			try {
+				tempDir = java.nio.file.Files.createTempDirectory("bree-test-future-").toFile();
+				File metaInfDir = new File(tempDir, "META-INF");
+				metaInfDir.mkdirs();
+
+				File manifestFile = new File(metaInfDir, "MANIFEST.MF");
+				try (java.io.FileWriter writer = new java.io.FileWriter(manifestFile)) {
+					writer.write("Manifest-Version: 1.0\n");
+					writer.write("Bundle-ManifestVersion: 2\n");
+					writer.write("Bundle-Name: Test " + bree + " BREE\n");
+					writer.write("Bundle-SymbolicName: test.future." + bree.replace('-', '_') + "\n");
+					writer.write("Bundle-Version: 1.0.0\n");
+					writer.write("Bundle-RequiredExecutionEnvironment: " + bree + "\n");
+				}
+
 				IInstallableUnit iu = BundlesAction.createBundleIU(BundlesAction.createBundleDescription(tempDir), null,
 						new PublisherInfo());
 
@@ -792,8 +799,10 @@ public class BundlesActionTest extends ActionTest {
 				assertTrue("Filter should contain version information for " + bree + ": " + filterString,
 						filterString.contains("version") || filterString.contains("osgi.ee"));
 			} finally {
-				// Clean up temp directory
-				deleteDirectory(tempDir);
+				// Clean up temp directory - guaranteed to execute even on test failure
+				if (tempDir != null) {
+					deleteDirectory(tempDir);
+				}
 			}
 		}
 	}
