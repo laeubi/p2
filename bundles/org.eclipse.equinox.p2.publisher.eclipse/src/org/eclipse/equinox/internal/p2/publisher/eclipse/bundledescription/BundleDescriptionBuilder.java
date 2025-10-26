@@ -588,9 +588,21 @@ public class BundleDescriptionBuilder {
 	 * @throws BundleException if the BREE format is invalid
 	 */
 	private static String createOSGiEERequirementFilter(String bree) throws BundleException {
+		if (bree == null || bree.trim().isEmpty()) {
+			throw new BundleException("Bundle-RequiredExecutionEnvironment cannot be null or empty."); //$NON-NLS-1$
+		}
+		
 		String[] nameVersion = getOSGiEENameVersion(bree);
 		String eeName = nameVersion[0];
 		String v = nameVersion[1];
+		
+		// Validate that we got a reasonable EE name - it should not be a placeholder or unknown value
+		if (eeName == null || eeName.trim().isEmpty() || 
+			"UNKNOWN".equalsIgnoreCase(eeName) || "UNSPECIFIED".equalsIgnoreCase(eeName)) {
+			throw new BundleException("Invalid execution environment: '" + bree + 
+				"'. Expected format like 'JavaSE-11' or 'JavaSE-1.8'."); //$NON-NLS-1$ //$NON-NLS-2$
+		}
+		
 		String filterSpec;
 		if (v == null) {
 			filterSpec = "(osgi.ee=" + eeName + ")"; //$NON-NLS-1$ //$NON-NLS-2$
@@ -606,7 +618,7 @@ public class BundleDescriptionBuilder {
 				// do another sanity check
 				FrameworkUtil.createFilter(filterSpec);
 			} catch (InvalidSyntaxException e1) {
-				throw new BundleException("Error converting required execution environment.", e1); //$NON-NLS-1$
+				throw new BundleException("Error converting required execution environment '" + bree + "'.", e1); //$NON-NLS-1$ //$NON-NLS-2$
 			}
 		}
 		return filterSpec;

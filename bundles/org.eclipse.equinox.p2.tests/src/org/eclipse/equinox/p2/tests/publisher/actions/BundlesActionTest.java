@@ -807,6 +807,54 @@ public class BundlesActionTest extends ActionTest {
 		}
 	}
 
+	/**
+	 * Test that invalid BREEs like "UNKNOWN" are properly rejected with a clear error.
+	 * This prevents the creation of invalid osgi.ee requirements.
+	 */
+	public void testInvalidBREEsRejected() throws Exception {
+		String[] invalidBREEs = {"UNKNOWN", "UNSPECIFIED", "", " "};
+
+		for (String invalidBree : invalidBREEs) {
+			if (invalidBree.trim().isEmpty()) {
+				continue; // Skip empty strings as they might not reach the BREE parsing
+			}
+			
+			File tempDir = null;
+			try {
+				tempDir = java.nio.file.Files.createTempDirectory("bree-test-invalid-").toFile();
+				File metaInfDir = new File(tempDir, "META-INF");
+				metaInfDir.mkdirs();
+
+				File manifestFile = new File(metaInfDir, "MANIFEST.MF");
+				try (java.io.FileWriter writer = new java.io.FileWriter(manifestFile)) {
+					writer.write("Manifest-Version: 1.0\n");
+					writer.write("Bundle-ManifestVersion: 2\n");
+					writer.write("Bundle-Name: Test Invalid BREE\n");
+					writer.write("Bundle-SymbolicName: test.invalid.bree\n");
+					writer.write("Bundle-Version: 1.0.0\n");
+					writer.write("Bundle-RequiredExecutionEnvironment: " + invalidBree + "\n");
+				}
+
+				try {
+					BundlesAction.createBundleIU(BundlesAction.createBundleDescription(tempDir), null,
+							new PublisherInfo());
+					fail("Expected BundleException for invalid BREE: " + invalidBree);
+				} catch (Exception e) {
+					// Expected - should fail with an exception
+					assertTrue("Exception message should mention invalid BREE: " + e.getMessage(),
+							e.getMessage() != null && 
+							(e.getMessage().contains("Invalid execution environment") || 
+							 e.getMessage().contains("Error converting required execution environment")));
+				}
+			} finally {
+				// Clean up temp directory
+				if (tempDir != null) {
+					deleteDirectory(tempDir);
+				}
+			}
+		}
+	}
+
 	private void deleteDirectory(File dir) {
 		if (dir.exists()) {
 			File[] files = dir.listFiles();
