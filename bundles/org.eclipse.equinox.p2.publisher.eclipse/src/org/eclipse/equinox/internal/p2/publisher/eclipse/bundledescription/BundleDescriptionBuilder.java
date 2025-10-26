@@ -289,7 +289,7 @@ public class BundleDescriptionBuilder {
 		return allImports.toArray(new ImportPackageSpecification[allImports.size()]);
 	}
 
-	public static void addImportPackages(ManifestElement importPackage, List<ImportPackageSpecification> allImports, int manifestVersion, boolean dynamic) {
+	private static void addImportPackages(ManifestElement importPackage, List<ImportPackageSpecification> allImports, int manifestVersion, boolean dynamic) {
 		String[] importNames = importPackage.getValueComponents();
 		for (String importName : importNames) {
 			// do not allow for multiple imports of same package of manifest version < 2
@@ -833,7 +833,7 @@ public class BundleDescriptionBuilder {
 		return new VersionRange(versionRange);
 	}
 
-	public static void checkImportExportSyntax(String headerKey, ManifestElement[] elements, boolean export, boolean dynamic, boolean jreBundle) throws BundleException {
+	private static void checkImportExportSyntax(String headerKey, ManifestElement[] elements, boolean export, boolean dynamic, boolean jreBundle) throws BundleException {
 		if (elements == null) {
 			return;
 		}
