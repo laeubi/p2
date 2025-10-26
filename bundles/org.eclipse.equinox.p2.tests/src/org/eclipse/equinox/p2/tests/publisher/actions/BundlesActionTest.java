@@ -607,21 +607,27 @@ public class BundlesActionTest extends ActionTest {
 		// Verify that the BREE requirement is properly created
 		Collection<IRequirement> requirements = iu.getRequirements();
 		assertNotNull("Requirements should not be null", requirements);
+		assertTrue("Should have at least one requirement", requirements.size() > 0);
 
 		// Find the osgi.ee requirement
 		IRequirement eeRequirement = requirements.stream()
-				.filter(req -> OSGI_EE.equals(RequiredPropertiesMatch.extractNamespace(req.getMatches())))
+				.filter(req -> {
+					if (req instanceof RequiredPropertiesMatch) {
+						return OSGI_EE.equals(RequiredPropertiesMatch.extractNamespace(req.getMatches()));
+					}
+					return false;
+				})
 				.findFirst()
 				.orElse(null);
 
 		assertNotNull("Should have an osgi.ee requirement", eeRequirement);
 
 		// Verify the requirement filter contains JavaSE and version 25
-		String filterString = RequiredPropertiesMatch.extractFilter(eeRequirement.getMatches()).toString();
-		assertTrue("Filter should contain 'osgi.ee=JavaSE': " + filterString,
-				filterString.contains("osgi.ee=JavaSE"));
-		assertTrue("Filter should contain 'version=25': " + filterString,
-				filterString.contains("version=25"));
+		String filterString = RequiredPropertiesMatch.extractPropertiesMatch(eeRequirement.getMatches()).toString();
+		assertTrue("Filter should contain 'osgi.ee' and 'JavaSE': " + filterString,
+				filterString.contains("osgi.ee") && filterString.contains("JavaSE"));
+		assertTrue("Filter should contain 'version' and '25': " + filterString,
+				filterString.contains("version") && filterString.contains("25"));
 	}
 
 	/**
@@ -638,21 +644,27 @@ public class BundlesActionTest extends ActionTest {
 		// Verify that the BREE requirement is properly created
 		Collection<IRequirement> requirements = iu.getRequirements();
 		assertNotNull("Requirements should not be null", requirements);
+		assertTrue("Should have at least one requirement", requirements.size() > 0);
 
 		// Find the osgi.ee requirement
 		IRequirement eeRequirement = requirements.stream()
-				.filter(req -> OSGI_EE.equals(RequiredPropertiesMatch.extractNamespace(req.getMatches())))
+				.filter(req -> {
+					if (req instanceof RequiredPropertiesMatch) {
+						return OSGI_EE.equals(RequiredPropertiesMatch.extractNamespace(req.getMatches()));
+					}
+					return false;
+				})
 				.findFirst()
 				.orElse(null);
 
 		assertNotNull("Should have an osgi.ee requirement", eeRequirement);
 
 		// Verify the requirement filter contains JavaSE and version 21
-		String filterString = RequiredPropertiesMatch.extractFilter(eeRequirement.getMatches()).toString();
-		assertTrue("Filter should contain 'osgi.ee=JavaSE': " + filterString,
-				filterString.contains("osgi.ee=JavaSE"));
-		assertTrue("Filter should contain 'version=21': " + filterString,
-				filterString.contains("version=21"));
+		String filterString = RequiredPropertiesMatch.extractPropertiesMatch(eeRequirement.getMatches()).toString();
+		assertTrue("Filter should contain 'osgi.ee' and 'JavaSE': " + filterString,
+				filterString.contains("osgi.ee") && filterString.contains("JavaSE"));
+		assertTrue("Filter should contain 'version' and '21': " + filterString,
+				filterString.contains("version") && filterString.contains("21"));
 	}
 
 	/**
@@ -699,21 +711,27 @@ public class BundlesActionTest extends ActionTest {
 				// Verify that the BREE requirement is properly created
 				Collection<IRequirement> requirements = iu.getRequirements();
 				assertNotNull("Requirements should not be null for " + bree, requirements);
+				assertTrue("Should have at least one requirement for " + bree, requirements.size() > 0);
 
 				// Find the osgi.ee requirement
 				IRequirement eeRequirement = requirements.stream()
-						.filter(req -> OSGI_EE.equals(RequiredPropertiesMatch.extractNamespace(req.getMatches())))
+						.filter(req -> {
+							if (req instanceof RequiredPropertiesMatch) {
+								return OSGI_EE.equals(RequiredPropertiesMatch.extractNamespace(req.getMatches()));
+							}
+							return false;
+						})
 						.findFirst()
 						.orElse(null);
 
 				assertNotNull("Should have an osgi.ee requirement for " + bree, eeRequirement);
 
 				// Verify the requirement filter
-				String filterString = RequiredPropertiesMatch.extractFilter(eeRequirement.getMatches()).toString();
-				assertTrue("Filter should contain 'osgi.ee=" + expectedEE + "' for " + bree + ": " + filterString,
-						filterString.contains("osgi.ee=" + expectedEE));
-				assertTrue("Filter should contain 'version=" + expectedVersion + "' for " + bree + ": " + filterString,
-						filterString.contains("version=" + expectedVersion));
+				String filterString = RequiredPropertiesMatch.extractPropertiesMatch(eeRequirement.getMatches()).toString();
+				assertTrue("Filter should contain 'osgi.ee' and '" + expectedEE + "' for " + bree + ": " + filterString,
+						filterString.contains("osgi.ee") && filterString.contains(expectedEE));
+				assertTrue("Filter should contain 'version' and '" + expectedVersion + "' for " + bree + ": " + filterString,
+						filterString.contains("version") && filterString.contains(expectedVersion));
 			} finally {
 				// Clean up temp directory
 				deleteDirectory(tempDir);
