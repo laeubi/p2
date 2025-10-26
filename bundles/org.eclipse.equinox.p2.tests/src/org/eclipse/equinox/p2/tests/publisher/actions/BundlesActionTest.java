@@ -739,6 +739,65 @@ public class BundlesActionTest extends ActionTest {
 		}
 	}
 
+	/**
+	 * Test edge cases and future-proofing for high version numbers.
+	 * This ensures that the BREE handling remains generic and doesn't break with future Java releases.
+	 */
+	public void testFutureJavaVersionBREEs() throws Exception {
+		// Test with hypothetical future Java versions to ensure forward compatibility
+		String[] futureVersions = {"JavaSE-30", "JavaSE-50", "JavaSE-100"};
+
+		for (String bree : futureVersions) {
+			File tempDir = new File(System.getProperty("java.io.tmpdir"), "bree-test-" + bree.replace('-', '_'));
+			File metaInfDir = new File(tempDir, "META-INF");
+			metaInfDir.mkdirs();
+
+			File manifestFile = new File(metaInfDir, "MANIFEST.MF");
+			try (java.io.FileWriter writer = new java.io.FileWriter(manifestFile)) {
+				writer.write("Manifest-Version: 1.0\n");
+				writer.write("Bundle-ManifestVersion: 2\n");
+				writer.write("Bundle-Name: Test " + bree + " BREE\n");
+				writer.write("Bundle-SymbolicName: test.future." + bree.replace('-', '_') + "\n");
+				writer.write("Bundle-Version: 1.0.0\n");
+				writer.write("Bundle-RequiredExecutionEnvironment: " + bree + "\n");
+			}
+
+			try {
+				IInstallableUnit iu = BundlesAction.createBundleIU(BundlesAction.createBundleDescription(tempDir), null,
+						new PublisherInfo());
+
+				assertNotNull("Bundle IU should be created for future version " + bree, iu);
+
+				// Verify that the BREE requirement is properly created
+				Collection<IRequirement> requirements = iu.getRequirements();
+				assertNotNull("Requirements should not be null for " + bree, requirements);
+				assertTrue("Should have at least one requirement for " + bree, requirements.size() > 0);
+
+				// Find the osgi.ee requirement
+				IRequirement eeRequirement = requirements.stream()
+						.filter(req -> {
+							if (req instanceof RequiredPropertiesMatch) {
+								return OSGI_EE.equals(RequiredPropertiesMatch.extractNamespace(req.getMatches()));
+							}
+							return false;
+						})
+						.findFirst()
+						.orElse(null);
+
+				assertNotNull("Should have an osgi.ee requirement for future version " + bree, eeRequirement);
+
+				// Just verify the filter is created - we don't care about exact format for future versions
+				String filterString = RequiredPropertiesMatch.extractPropertiesMatch(eeRequirement.getMatches()).toString();
+				assertNotNull("Filter should be created for " + bree, filterString);
+				assertTrue("Filter should contain version information for " + bree + ": " + filterString,
+						filterString.contains("version") || filterString.contains("osgi.ee"));
+			} finally {
+				// Clean up temp directory
+				deleteDirectory(tempDir);
+			}
+		}
+	}
+
 	private void deleteDirectory(File dir) {
 		if (dir.exists()) {
 			File[] files = dir.listFiles();
