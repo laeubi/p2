@@ -40,13 +40,13 @@ public class BundleDescriptionBuilder {
 			Constants.BUNDLE_VERSION_ATTRIBUTE, PACKAGE_SPECIFICATION_VERSION, Constants.VERSION_ATTRIBUTE };
 	private static final String[] DEFINED_REQUIRE_BUNDLE_DIRECTIVES = {Constants.RESOLUTION_DIRECTIVE, Constants.VISIBILITY_DIRECTIVE};
 	private static final String[] DEFINED_FRAGMENT_HOST_DIRECTIVES = {Constants.EXTENSION_DIRECTIVE};
-	static final String[] DEFINED_BSN_DIRECTIVES = {Constants.SINGLETON_DIRECTIVE, Constants.FRAGMENT_ATTACHMENT_DIRECTIVE, Constants.MANDATORY_DIRECTIVE};
-	static final String[] DEFINED_BSN_MATCHING_ATTRS = {Constants.BUNDLE_VERSION_ATTRIBUTE, BundleDescriptionBuilder.OPTIONAL_ATTRIBUTE, BundleDescriptionBuilder.REPROVIDE_ATTRIBUTE};
+	private static final String[] DEFINED_BSN_DIRECTIVES = {Constants.SINGLETON_DIRECTIVE, Constants.FRAGMENT_ATTACHMENT_DIRECTIVE, Constants.MANDATORY_DIRECTIVE};
+	private static final String[] DEFINED_BSN_MATCHING_ATTRS = {Constants.BUNDLE_VERSION_ATTRIBUTE, BundleDescriptionBuilder.OPTIONAL_ATTRIBUTE, BundleDescriptionBuilder.REPROVIDE_ATTRIBUTE};
 	private static final String[] DEFINED_REQUIRE_CAPABILITY_DIRECTIVES = {Constants.RESOLUTION_DIRECTIVE, Constants.FILTER_DIRECTIVE, Namespace.REQUIREMENT_CARDINALITY_DIRECTIVE};
 	private static final String[] DEFINED_REQUIRE_CAPABILITY_ATTRS = {};
 	private static final String[] DEFINED_OSGI_VALIDATE_HEADERS = {Constants.IMPORT_PACKAGE, Constants.DYNAMICIMPORT_PACKAGE, Constants.EXPORT_PACKAGE, Constants.FRAGMENT_HOST, Constants.BUNDLE_SYMBOLICNAME, Constants.REQUIRE_BUNDLE};
-	static final String GENERIC_REQUIRE = "Eclipse-GenericRequire"; //$NON-NLS-1$
-	static final String GENERIC_CAPABILITY = "Eclipse-GenericCapability"; //$NON-NLS-1$
+	private static final String GENERIC_REQUIRE = "Eclipse-GenericRequire"; //$NON-NLS-1$
+	private static final String GENERIC_CAPABILITY = "Eclipse-GenericCapability"; //$NON-NLS-1$
 
 	private static final String ATTR_TYPE_STRING = "string"; //$NON-NLS-1$
 	private static final String ATTR_TYPE_VERSION = "version"; //$NON-NLS-1$
