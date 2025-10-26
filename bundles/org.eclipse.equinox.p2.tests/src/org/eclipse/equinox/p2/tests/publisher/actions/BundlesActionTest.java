@@ -591,4 +591,149 @@ public class BundlesActionTest extends ActionTest {
 			assertEquals(expectedVersions[i], capabilities.get(i).getVersion());
 		}
 	}
+
+	/**
+	 * Test that modern Java versions (JavaSE-25) are properly supported as BREEs
+	 * without requiring explicit profile files.
+	 */
+	public void testJavaSE25BREE() throws Exception {
+		File testData = new File(TestActivator.getTestDataFolder(), "BundlesActionTest/test6");
+		IInstallableUnit iu = BundlesAction.createBundleIU(BundlesAction.createBundleDescription(testData), null,
+				new PublisherInfo());
+
+		assertNotNull("Bundle IU should be created", iu);
+		assertEquals("test6", iu.getId());
+
+		// Verify that the BREE requirement is properly created
+		Collection<IRequirement> requirements = iu.getRequirements();
+		assertNotNull("Requirements should not be null", requirements);
+
+		// Find the osgi.ee requirement
+		IRequirement eeRequirement = requirements.stream()
+				.filter(req -> OSGI_EE.equals(RequiredPropertiesMatch.extractNamespace(req.getMatches())))
+				.findFirst()
+				.orElse(null);
+
+		assertNotNull("Should have an osgi.ee requirement", eeRequirement);
+
+		// Verify the requirement filter contains JavaSE and version 25
+		String filterString = RequiredPropertiesMatch.extractFilter(eeRequirement.getMatches()).toString();
+		assertTrue("Filter should contain 'osgi.ee=JavaSE': " + filterString,
+				filterString.contains("osgi.ee=JavaSE"));
+		assertTrue("Filter should contain 'version=25': " + filterString,
+				filterString.contains("version=25"));
+	}
+
+	/**
+	 * Test that JavaSE-21 BREE is properly supported.
+	 */
+	public void testJavaSE21BREE() throws Exception {
+		File testData = new File(TestActivator.getTestDataFolder(), "BundlesActionTest/test7");
+		IInstallableUnit iu = BundlesAction.createBundleIU(BundlesAction.createBundleDescription(testData), null,
+				new PublisherInfo());
+
+		assertNotNull("Bundle IU should be created", iu);
+		assertEquals("test7", iu.getId());
+
+		// Verify that the BREE requirement is properly created
+		Collection<IRequirement> requirements = iu.getRequirements();
+		assertNotNull("Requirements should not be null", requirements);
+
+		// Find the osgi.ee requirement
+		IRequirement eeRequirement = requirements.stream()
+				.filter(req -> OSGI_EE.equals(RequiredPropertiesMatch.extractNamespace(req.getMatches())))
+				.findFirst()
+				.orElse(null);
+
+		assertNotNull("Should have an osgi.ee requirement", eeRequirement);
+
+		// Verify the requirement filter contains JavaSE and version 21
+		String filterString = RequiredPropertiesMatch.extractFilter(eeRequirement.getMatches()).toString();
+		assertTrue("Filter should contain 'osgi.ee=JavaSE': " + filterString,
+				filterString.contains("osgi.ee=JavaSE"));
+		assertTrue("Filter should contain 'version=21': " + filterString,
+				filterString.contains("version=21"));
+	}
+
+	/**
+	 * Test that various modern JavaSE BREE formats are properly parsed and handled.
+	 * This ensures backward compatibility and forward compatibility with future Java versions.
+	 */
+	public void testVariousJavaSEBREEFormats() throws Exception {
+		// Test different BREE formats to ensure they are all handled correctly
+		String[][] testCases = {
+			{"JavaSE-11", "JavaSE", "11"},
+			{"JavaSE-17", "JavaSE", "17"},
+			{"JavaSE-21", "JavaSE", "21"},
+			{"JavaSE-25", "JavaSE", "25"},
+			{"JavaSE-1.8", "JavaSE", "1.8"},
+			{"J2SE-1.4", "JavaSE", "1.4"} // J2SE should be converted to JavaSE
+		};
+
+		for (String[] testCase : testCases) {
+			String bree = testCase[0];
+			String expectedEE = testCase[1];
+			String expectedVersion = testCase[2];
+
+			// Create a temporary test bundle with this BREE
+			File tempDir = new File(System.getProperty("java.io.tmpdir"), "bree-test-" + bree.replace('.', '_'));
+			File metaInfDir = new File(tempDir, "META-INF");
+			metaInfDir.mkdirs();
+
+			File manifestFile = new File(metaInfDir, "MANIFEST.MF");
+			try (java.io.FileWriter writer = new java.io.FileWriter(manifestFile)) {
+				writer.write("Manifest-Version: 1.0\n");
+				writer.write("Bundle-ManifestVersion: 2\n");
+				writer.write("Bundle-Name: Test " + bree + " BREE\n");
+				writer.write("Bundle-SymbolicName: test." + bree.replace('.', '_').replace('-', '_') + "\n");
+				writer.write("Bundle-Version: 1.0.0\n");
+				writer.write("Bundle-RequiredExecutionEnvironment: " + bree + "\n");
+			}
+
+			try {
+				IInstallableUnit iu = BundlesAction.createBundleIU(BundlesAction.createBundleDescription(tempDir), null,
+						new PublisherInfo());
+
+				assertNotNull("Bundle IU should be created for " + bree, iu);
+
+				// Verify that the BREE requirement is properly created
+				Collection<IRequirement> requirements = iu.getRequirements();
+				assertNotNull("Requirements should not be null for " + bree, requirements);
+
+				// Find the osgi.ee requirement
+				IRequirement eeRequirement = requirements.stream()
+						.filter(req -> OSGI_EE.equals(RequiredPropertiesMatch.extractNamespace(req.getMatches())))
+						.findFirst()
+						.orElse(null);
+
+				assertNotNull("Should have an osgi.ee requirement for " + bree, eeRequirement);
+
+				// Verify the requirement filter
+				String filterString = RequiredPropertiesMatch.extractFilter(eeRequirement.getMatches()).toString();
+				assertTrue("Filter should contain 'osgi.ee=" + expectedEE + "' for " + bree + ": " + filterString,
+						filterString.contains("osgi.ee=" + expectedEE));
+				assertTrue("Filter should contain 'version=" + expectedVersion + "' for " + bree + ": " + filterString,
+						filterString.contains("version=" + expectedVersion));
+			} finally {
+				// Clean up temp directory
+				deleteDirectory(tempDir);
+			}
+		}
+	}
+
+	private void deleteDirectory(File dir) {
+		if (dir.exists()) {
+			File[] files = dir.listFiles();
+			if (files != null) {
+				for (File file : files) {
+					if (file.isDirectory()) {
+						deleteDirectory(file);
+					} else {
+						file.delete();
+					}
+				}
+			}
+			dir.delete();
+		}
+	}
 }
