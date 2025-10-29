@@ -55,6 +55,10 @@
             id="org.eclipse.equinox.p2.ui.sdk.install">
       </command>
       <command
+            name="%InstallSources.command"
+            id="org.eclipse.equinox.p2.ui.sdk.installSources">
+      </command>
+      <command
             defaultHandler="org.eclipse.ui.internal.about.InstallationHandler"
             id="org.eclipse.equinox.p2.ui.sdk.installationDetails"
             name="%InstallationDetails.command">
@@ -69,6 +73,10 @@
       <handler
             commandId="org.eclipse.equinox.p2.ui.sdk.install"
             class="org.eclipse.equinox.internal.p2.ui.sdk.InstallNewSoftwareHandler">
+      </handler>
+      <handler
+            commandId="org.eclipse.equinox.p2.ui.sdk.installSources"
+            class="org.eclipse.equinox.internal.p2.ui.sdk.InstallSourcesHandler">
       </handler>
    </extension>
    <extension
@@ -89,6 +97,16 @@
                   commandId="org.eclipse.equinox.p2.ui.sdk.install"
             	  mnemonic="%Install.command.mnemonic"
                   id="org.eclipse.equinox.p2.ui.sdk.install"
+                  icon="icons/obj/iu_obj.svg">
+            </command>
+
+      </menuContribution>
+      <menuContribution
+            locationURI="menu:help?after=org.eclipse.equinox.p2.ui.sdk.install">
+            <command
+                  commandId="org.eclipse.equinox.p2.ui.sdk.installSources"
+            	  mnemonic="%InstallSources.command.mnemonic"
+                  id="org.eclipse.equinox.p2.ui.sdk.installSources"
                   icon="icons/obj/iu_obj.svg">
             </command>
 
