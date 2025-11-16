@@ -626,7 +626,7 @@ public class BundlesActionTest extends ActionTest {
 		
 		// The filter should contain the effective property name
 		String filterString = filter.toString();
-		assertTrue("Filter should reference org.eclipse.p2.effective.active property",
+		assertTrue("Filter should reference org.eclipse.p2.effective.active property: " + filterString,
 			filterString.contains("org.eclipse.p2.effective.active"));
 		
 		// Find the requirement with effective:=resolve (test.capability)
@@ -644,7 +644,7 @@ public class BundlesActionTest extends ActionTest {
 		IMatchExpression<IInstallableUnit> resolveFilter = resolveRequirement.getFilter();
 		if (resolveFilter != null) {
 			String resolveFilterString = resolveFilter.toString();
-			assertFalse("Filter should not reference org.eclipse.p2.effective.resolve property",
+			assertFalse("Filter should not reference org.eclipse.p2.effective.resolve property: " + resolveFilterString,
 				resolveFilterString.contains("org.eclipse.p2.effective.resolve"));
 		}
 		
@@ -662,7 +662,7 @@ public class BundlesActionTest extends ActionTest {
 		IMatchExpression<IInstallableUnit> eeFilter = eeRequirement.getFilter();
 		if (eeFilter != null) {
 			String eeFilterString = eeFilter.toString();
-			assertFalse("Filter should not reference org.eclipse.p2.effective property",
+			assertFalse("Filter should not reference org.eclipse.p2.effective property: " + eeFilterString,
 				eeFilterString.contains("org.eclipse.p2.effective"));
 		}
 	}
