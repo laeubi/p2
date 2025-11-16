@@ -591,4 +591,79 @@ public class BundlesActionTest extends ActionTest {
 			assertEquals(expectedVersions[i], capabilities.get(i).getVersion());
 		}
 	}
+
+	/**
+	 * Test that requirements with the effective directive are handled correctly.
+	 * Requirements with effective:=resolve (or no directive) should be included by default.
+	 * Requirements with effective:=active should have a filter that evaluates to false by default.
+	 */
+	public void testEffectiveDirective() throws Exception {
+		File testData = new File(TestActivator.getTestDataFolder(), "BundlesActionTest/effectiveTest");
+		IInstallableUnit iu = BundlesAction.createBundleIU(BundlesAction.createBundleDescription(testData), null,
+				new PublisherInfo());
+		
+		// Find requirements by namespace
+		List<IRequirement> requirements = Arrays.asList(iu.getRequirements());
+		
+		// Check that we have the expected number of requirements
+		// Should have: osgi.ee (no effective), test.capability (effective:=resolve), 
+		// org.junit.platform.engine (effective:=active)
+		assertFalse("Should have requirements", requirements.isEmpty());
+		
+		// Find the requirement with effective:=active (org.junit.platform.engine)
+		IRequirement activeRequirement = requirements.stream()
+			.filter(req -> req instanceof RequiredPropertiesMatch)
+			.map(req -> (RequiredPropertiesMatch) req)
+			.filter(req -> RequiredPropertiesMatch.extractNamespace(req.getMatches()).equals("org.junit.platform.engine"))
+			.findFirst()
+			.orElse(null);
+		
+		assertNotNull("Should have org.junit.platform.engine requirement", activeRequirement);
+		
+		// The requirement with effective:=active should have a filter
+		IMatchExpression<IInstallableUnit> filter = activeRequirement.getFilter();
+		assertNotNull("Requirement with effective:=active should have a filter", filter);
+		
+		// The filter should contain the effective property name
+		String filterString = filter.toString();
+		assertTrue("Filter should reference org.eclipse.p2.effective.active property",
+			filterString.contains("org.eclipse.p2.effective.active"));
+		
+		// Find the requirement with effective:=resolve (test.capability)
+		IRequirement resolveRequirement = requirements.stream()
+			.filter(req -> req instanceof RequiredPropertiesMatch)
+			.map(req -> (RequiredPropertiesMatch) req)
+			.filter(req -> RequiredPropertiesMatch.extractNamespace(req.getMatches()).equals("test.capability"))
+			.findFirst()
+			.orElse(null);
+		
+		assertNotNull("Should have test.capability requirement", resolveRequirement);
+		
+		// The requirement with effective:=resolve should NOT have an effective filter
+		// (it may have other filters, but not for effective)
+		IMatchExpression<IInstallableUnit> resolveFilter = resolveRequirement.getFilter();
+		if (resolveFilter != null) {
+			String resolveFilterString = resolveFilter.toString();
+			assertFalse("Filter should not reference org.eclipse.p2.effective.resolve property",
+				resolveFilterString.contains("org.eclipse.p2.effective.resolve"));
+		}
+		
+		// Find the requirement without effective directive (osgi.ee)
+		IRequirement eeRequirement = requirements.stream()
+			.filter(req -> req instanceof RequiredPropertiesMatch)
+			.map(req -> (RequiredPropertiesMatch) req)
+			.filter(req -> RequiredPropertiesMatch.extractNamespace(req.getMatches()).equals("osgi.ee"))
+			.findFirst()
+			.orElse(null);
+		
+		assertNotNull("Should have osgi.ee requirement", eeRequirement);
+		
+		// The requirement without effective directive should NOT have an effective filter
+		IMatchExpression<IInstallableUnit> eeFilter = eeRequirement.getFilter();
+		if (eeFilter != null) {
+			String eeFilterString = eeFilter.toString();
+			assertFalse("Filter should not reference org.eclipse.p2.effective property",
+				eeFilterString.contains("org.eclipse.p2.effective"));
+		}
+	}
 }

@@ -31,6 +31,7 @@ import org.eclipse.core.runtime.*;
 import org.eclipse.equinox.frameworkadmin.BundleInfo;
 import org.eclipse.equinox.internal.p2.core.helpers.LogHelper;
 import org.eclipse.equinox.internal.p2.metadata.ArtifactKey;
+import org.eclipse.equinox.internal.p2.metadata.InstallableUnit;
 import org.eclipse.equinox.internal.p2.metadata.ProvidedCapability;
 import org.eclipse.equinox.internal.p2.publisher.Messages;
 import org.eclipse.equinox.internal.p2.publisher.eclipse.GeneratorBundleInfo;
@@ -148,6 +149,27 @@ public class BundlesAction extends AbstractPublisherAction {
 	 * during installation.
 	 */
 	public static final String INSTALLATION_GREEDY = "greedy"; //$NON-NLS-1$
+
+	/**
+	 * OSGi directive for specifying when a requirement should be considered.
+	 * According to the OSGi specification, the default value is "resolve".
+	 * Other common values include "active" for runtime-only requirements.
+	 */
+	public static final String EFFECTIVE_DIRECTIVE = "effective"; //$NON-NLS-1$
+
+	/**
+	 * Default value for the effective directive, indicating the requirement
+	 * should be considered during resolution.
+	 */
+	public static final String EFFECTIVE_RESOLVE = "resolve"; //$NON-NLS-1$
+
+	/**
+	 * Prefix for filter properties used to control whether requirements with
+	 * specific effective directives should be included. Similar to source bundle
+	 * filtering, requirements with effective values other than "resolve" will
+	 * have a filter added that can be enabled by setting a context property.
+	 */
+	public static final String FILTER_PROPERTY_EFFECTIVE_PREFIX = "org.eclipse.p2.effective."; //$NON-NLS-1$
 
 	private File[] locations;
 	private BundleDescription[] bundles;
@@ -431,7 +453,6 @@ public class BundlesAction extends AbstractPublisherAction {
 				greedy));
 	}
 
-	// TODO Handle the "effective:=" directive somehow?
 	protected void addRequirement(List<IRequirement> reqsDeps, GenericSpecification requireCapSpec,
 			ManifestElement[] rawRequireCapabilities) {
 		BundleRequirement req = requireCapSpec.getRequirement();
@@ -443,7 +464,22 @@ public class BundlesAction extends AbstractPublisherAction {
 		boolean greedy = isGreedy(directives);
 		int minCard = getMinCardinality(directives);
 		int maxCard = getMaxCardinality(directives);
-		IRequirement requireCap = MetadataFactory.createRequirement(namespace, capFilter, null, minCard, maxCard,
+		
+		// Handle the effective directive to distinguish between resolve and runtime requirements
+		String effective = directives.get(EFFECTIVE_DIRECTIVE);
+		IMatchExpression<IInstallableUnit> envFilter = null;
+		
+		// According to OSGi spec, no directive or effective:=resolve means include during resolution
+		// Other values (like effective:=active) should be filtered by default but can be enabled
+		if (effective != null && !EFFECTIVE_RESOLVE.equals(effective)) {
+			// Create a filter that evaluates to false by default but can be enabled
+			// via context property (e.g., org.eclipse.p2.effective.active=true)
+			String filterPropertyName = FILTER_PROPERTY_EFFECTIVE_PREFIX + effective;
+			String effectiveFilter = String.format("(%s=true)", filterPropertyName); //$NON-NLS-1$
+			envFilter = InstallableUnit.parseFilter(effectiveFilter);
+		}
+		
+		IRequirement requireCap = MetadataFactory.createRequirement(namespace, capFilter, envFilter, minCard, maxCard,
 				greedy);
 		reqsDeps.add(requireCap);
 	}
@@ -459,7 +495,22 @@ public class BundlesAction extends AbstractPublisherAction {
 		boolean greedy = isGreedy(directives);
 		int minCard = getMinCardinality(directives);
 		int maxCard = getMaxCardinality(directives);
-		IRequirement requireCap = MetadataFactory.createRequirement(namespace, capFilter, null, minCard, maxCard,
+		
+		// Handle the effective directive to distinguish between resolve and runtime requirements
+		String effective = directives.get(EFFECTIVE_DIRECTIVE);
+		IMatchExpression<IInstallableUnit> envFilter = null;
+		
+		// According to OSGi spec, no directive or effective:=resolve means include during resolution
+		// Other values (like effective:=active) should be filtered by default but can be enabled
+		if (effective != null && !EFFECTIVE_RESOLVE.equals(effective)) {
+			// Create a filter that evaluates to false by default but can be enabled
+			// via context property (e.g., org.eclipse.p2.effective.active=true)
+			String filterPropertyName = FILTER_PROPERTY_EFFECTIVE_PREFIX + effective;
+			String effectiveFilter = String.format("(%s=true)", filterPropertyName); //$NON-NLS-1$
+			envFilter = InstallableUnit.parseFilter(effectiveFilter);
+		}
+		
+		IRequirement requireCap = MetadataFactory.createRequirement(namespace, capFilter, envFilter, minCard, maxCard,
 				greedy, bd.getSymbolicName());
 		reqsDeps.add(requireCap);
 	}

@@ -1,0 +1,9 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: Effective Test Bundle
+Bundle-SymbolicName: effective.test;singleton:=true
+Bundle-Version: 1.0.0
+Bundle-RequiredExecutionEnvironment: JavaSE-1.8
+Require-Capability: org.junit.platform.engine;filter:="(&(org.junit.platform.engine=junit-jupiter)(version>=5.12.2)(!(version>=6)))";effective:=active,
+ osgi.ee;filter:="(&(osgi.ee=JavaSE)(version=1.8))",
+ test.capability;filter:="(test.capability=test-value)";effective:=resolve
