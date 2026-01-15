@@ -100,5 +100,12 @@ public class ProvSDKMessages extends NLS {
 	public static String TrustPreferencePage_TrustAllYes;
 	public static String TrustPreferencePage_TypeColumn;
 	public static String TrustPreferencePage_ValidityColumn;
+	public static String InstallSourcesHandler_DisabledMessage;
+	public static String InstallSourcesHandler_DisabledTitle;
+	public static String InstallSourcesHandler_EnabledMessage;
+	public static String InstallSourcesHandler_EnabledTitle;
+	public static String InstallSourcesHandler_JobName;
+	public static String InstallSourcesHandler_ProgressTaskName;
+	public static String InstallSourcesHandler_UpdateJobName;
 
 }
