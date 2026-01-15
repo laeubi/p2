@@ -93,6 +93,10 @@ public class QueryProvider {
 	 * Creates a query that matches IUs that are either groups or members of any category.
 	 * This is used when showing a flat view to include both installable features (groups)
 	 * and items that are part of categories.
+	 * 
+	 * Note: This method creates a compound query from individual category member queries.
+	 * While this could impact performance with a large number of categories, it follows
+	 * the established pattern in this class and ensures consistency with category view behavior.
 	 *
 	 * @param queryable the queryable to search for categories
 	 * @param topLevelQuery the base query for visible IUs (typically groups, with environment filter already applied)
@@ -172,6 +176,7 @@ public class QueryProvider {
 				if (element instanceof MetadataRepositories || element instanceof MetadataRepositoryElement) {
 					if (context.getViewType() == IUViewQueryContext.AVAILABLE_VIEW_FLAT || !context.getUseCategories()) {
 						// When not grouping by categories, show both groups and items that are members of any category
+						// The cast is safe because in the AVAILABLE_IUS case, queryable is always an IQueryable<IInstallableUnit>
 						@SuppressWarnings("unchecked")
 						IQueryable<IInstallableUnit> iuQueryable = (IQueryable<IInstallableUnit>) queryable;
 						topLevelQuery = createGroupsOrCategoryMembersQuery(iuQueryable, topLevelQuery, context, targetProfile);
