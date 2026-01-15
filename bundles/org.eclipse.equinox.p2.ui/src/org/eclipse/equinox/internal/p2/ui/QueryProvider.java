@@ -95,12 +95,15 @@ public class QueryProvider {
 	 * and items that are part of categories.
 	 *
 	 * @param queryable the queryable to search for categories
-	 * @param topLevelQuery the base query for visible IUs (typically groups)
+	 * @param topLevelQuery the base query for visible IUs (typically groups, with environment filter already applied)
+	 * @param context the view query context
+	 * @param targetProfile the target profile for environment filtering
 	 * @return a compound query matching groups or category members
 	 */
-	private IQuery<IInstallableUnit> createGroupsOrCategoryMembersQuery(IQueryable<IInstallableUnit> queryable, IQuery<IInstallableUnit> topLevelQuery) {
+	private IQuery<IInstallableUnit> createGroupsOrCategoryMembersQuery(IQueryable<IInstallableUnit> queryable, IQuery<IInstallableUnit> topLevelQuery, IUViewQueryContext context, IProfile targetProfile) {
 		// First, get all categories
 		IQuery<IInstallableUnit> categoryQuery = QueryUtil.createIUCategoryQuery();
+		categoryQuery = createEnvironmentFilterQuery(context, targetProfile, categoryQuery);
 		IQueryResult<IInstallableUnit> categories = queryable.query(categoryQuery, null);
 
 		// If there are no categories, just return the top level query
@@ -112,6 +115,8 @@ public class QueryProvider {
 		List<IQuery<IInstallableUnit>> memberQueries = new ArrayList<>();
 		for (IInstallableUnit category : categories) {
 			IQuery<IInstallableUnit> memberQuery = QueryUtil.createIUCategoryMemberQuery(category);
+			// Apply environment filter to category members as well
+			memberQuery = createEnvironmentFilterQuery(context, targetProfile, memberQuery);
 			memberQueries.add(memberQuery);
 		}
 
@@ -169,7 +174,7 @@ public class QueryProvider {
 						// When not grouping by categories, show both groups and items that are members of any category
 						@SuppressWarnings("unchecked")
 						IQueryable<IInstallableUnit> iuQueryable = (IQueryable<IInstallableUnit>) queryable;
-						topLevelQuery = createGroupsOrCategoryMembersQuery(iuQueryable, topLevelQuery);
+						topLevelQuery = createGroupsOrCategoryMembersQuery(iuQueryable, topLevelQuery, context, targetProfile);
 						AvailableIUWrapper wrapper = new AvailableIUWrapper(queryable, element, false, context.getShowAvailableChildren());
 						if (showLatest) {
 							topLevelQuery = QueryUtil.createLatestQuery(topLevelQuery);
