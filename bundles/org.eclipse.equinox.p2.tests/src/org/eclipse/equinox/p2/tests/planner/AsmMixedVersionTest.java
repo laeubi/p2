@@ -14,11 +14,9 @@
 package org.eclipse.equinox.p2.tests.planner;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import org.eclipse.core.runtime.IStatus;
@@ -42,6 +40,8 @@ import org.eclipse.equinox.p2.planner.ProfileInclusionRules;
 import org.eclipse.equinox.p2.query.IQueryable;
 import org.eclipse.equinox.p2.query.QueryUtil;
 import org.eclipse.equinox.p2.tests.AbstractProvisioningTest;
+import org.eclipse.equinox.p2.tests.TestActivator;
+import org.osgi.service.resolver.ResolutionException;
 
 /**
  * Reproduces a scenario where several consumer bundles import ASM packages
@@ -101,7 +101,30 @@ public class AsmMixedVersionTest extends AbstractProvisioningTest {
 	}
 
 	private static IProvidedCapability packageCapability(String packageName, Version version) {
-		return MetadataFactory.createProvidedCapability(JAVA_PACKAGE_NAMESPACE, packageName, version);
+		return packageCapability(packageName, version, null);
+	}
+
+	/**
+	 * Creates a <code>java.package</code> provided capability, optionally
+	 * carrying a <code>uses</code> directive - exactly as real OSGi bundles
+	 * declare in their <code>Export-Package</code> manifest header (e.g.
+	 * <code>Export-Package: org.objectweb.asm.util;uses:="org.objectweb.asm,
+	 * org.objectweb.asm.tree,org.objectweb.asm.tree.analysis"</code>), and as
+	 * seen in the real Orbit ASM metadata's
+	 * <code>java.package.directive.uses</code> property. The <code>uses</code>
+	 * directive tells consumers of this package which other packages must be
+	 * used in a version-compatible way alongside it - see
+	 * https://docs.osgi.org/specification/osgi.core/8.0.0/framework.module.html#i3127019
+	 */
+	private static IProvidedCapability packageCapability(String packageName, Version version, String uses) {
+		if (uses == null) {
+			return MetadataFactory.createProvidedCapability(JAVA_PACKAGE_NAMESPACE, packageName, version);
+		}
+		Map<String, Object> properties = new LinkedHashMap<>();
+		properties.put(JAVA_PACKAGE_NAMESPACE, packageName);
+		properties.put(IProvidedCapability.PROPERTY_VERSION, version);
+		properties.put(JAVA_PACKAGE_NAMESPACE + ".directive.uses", uses);
+		return MetadataFactory.createProvidedCapability(JAVA_PACKAGE_NAMESPACE, properties);
 	}
 
 	/**
@@ -129,21 +152,24 @@ public class AsmMixedVersionTest extends AbstractProvisioningTest {
 		IInstallableUnit tree = createIU("org.objectweb.asm.tree", version, null,
 				new IRequirement[] { packageRequirement("org.objectweb.asm", range),
 						packageRequirement("org.objectweb.asm.signature", range) },
-				new IProvidedCapability[] { packageCapability("org.objectweb.asm.tree", version) }, NO_PROPERTIES,
-				ITouchpointType.NONE, NO_TP_DATA, false);
+				new IProvidedCapability[] { packageCapability("org.objectweb.asm.tree", version,
+						"org.objectweb.asm,org.objectweb.asm.signature") },
+				NO_PROPERTIES, ITouchpointType.NONE, NO_TP_DATA, false);
 
 		IInstallableUnit commons = createIU("org.objectweb.asm.commons", version, null,
 				new IRequirement[] { packageRequirement("org.objectweb.asm", range),
 						packageRequirement("org.objectweb.asm.signature", range),
 						packageRequirement("org.objectweb.asm.tree", range) },
-				new IProvidedCapability[] { packageCapability("org.objectweb.asm.commons", version) }, NO_PROPERTIES,
-				ITouchpointType.NONE, NO_TP_DATA, false);
+				new IProvidedCapability[] { packageCapability("org.objectweb.asm.commons", version,
+						"org.objectweb.asm,org.objectweb.asm.signature,org.objectweb.asm.tree") },
+				NO_PROPERTIES, ITouchpointType.NONE, NO_TP_DATA, false);
 
 		IInstallableUnit treeAnalysis = createIU("org.objectweb.asm.tree.analysis", version, null,
 				new IRequirement[] { packageRequirement("org.objectweb.asm", range),
 						packageRequirement("org.objectweb.asm.signature", range),
 						packageRequirement("org.objectweb.asm.tree", range) },
-				new IProvidedCapability[] { packageCapability("org.objectweb.asm.tree.analysis", version) },
+				new IProvidedCapability[] { packageCapability("org.objectweb.asm.tree.analysis", version,
+						"org.objectweb.asm,org.objectweb.asm.signature,org.objectweb.asm.tree") },
 				NO_PROPERTIES, ITouchpointType.NONE, NO_TP_DATA, false);
 
 		IInstallableUnit util = createIU("org.objectweb.asm.util", version, null,
@@ -151,8 +177,9 @@ public class AsmMixedVersionTest extends AbstractProvisioningTest {
 						packageRequirement("org.objectweb.asm.signature", range),
 						packageRequirement("org.objectweb.asm.tree", range),
 						packageRequirement("org.objectweb.asm.tree.analysis", range) },
-				new IProvidedCapability[] { packageCapability("org.objectweb.asm.util", version) }, NO_PROPERTIES,
-				ITouchpointType.NONE, NO_TP_DATA, false);
+				new IProvidedCapability[] { packageCapability("org.objectweb.asm.util", version,
+						"org.objectweb.asm,org.objectweb.asm.signature,org.objectweb.asm.tree,org.objectweb.asm.tree.analysis") },
+				NO_PROPERTIES, ITouchpointType.NONE, NO_TP_DATA, false);
 
 		List<IInstallableUnit> ius = new ArrayList<>();
 		ius.add(asm);
@@ -232,6 +259,22 @@ public class AsmMixedVersionTest extends AbstractProvisioningTest {
 	}
 
 	/**
+	 * Hands the given profile's installable units over to the real, standard
+	 * OSGi resolver (see {@link OsgiUsesOracle}) to check whether they could
+	 * actually be wired together consistently by a real OSGi framework, i.e.
+	 * without violating any package <code>uses</code> constraint. Fails the test
+	 * with the resolver's own diagnostic message if not.
+	 */
+	private static void assertOsgiUsesConsistent(String message, IProfile profile) {
+		List<IInstallableUnit> ius = profile.query(QueryUtil.ALL_UNITS, new NullProgressMonitor()).toUnmodifiableSet()
+				.stream().toList();
+		ResolutionException exception = OsgiUsesOracle.validate(ius, TestActivator.getContext());
+		if (exception != null) {
+			fail(message + " - the real OSGi resolver reports: " + exception.getMessage());
+		}
+	}
+
+	/**
 	 * Plans and executes the given request with a {@link ProvisioningContext}.
 	 * All IUs in this test are synthetic (no real artifacts), so there is
 	 * nothing to collect, download or trust-check - the test is only interested
@@ -276,6 +319,7 @@ public class AsmMixedVersionTest extends AbstractProvisioningTest {
 			assertEquals("Unexpected version(s) for " + id + " after initial install",
 					new TreeSet<>(List.of(ASM_9_9_1.version())), versionsOf(profile, id));
 		}
+		assertOsgiUsesConsistent("Profile after initial install should be OSGi-resolvable", profile);
 
 		// Phase 2: install test.bundle.c (which requires the newer ASM release via
 		// org.objectweb.asm.util), both ASM releases are now available;
@@ -296,27 +340,15 @@ public class AsmMixedVersionTest extends AbstractProvisioningTest {
 		System.out.println("=== After installing test.bundle.c ===");
 		System.out.println(printAsmVersions(profile));
 
-		// What one would actually expect: for each of test.bundle.a's own ASM
-		// requirements, the highest installed provider satisfying that
-		// requirement should belong to the very same ASM release - i.e. all of
-		// them should agree on one common version. For simplicity, we don't
-		// inspect the individual package versions/uses-constraints here, we just
-		// compare the highest matching version per requirement; a real check
-		// would need to also verify that these versions can actually be used
-		// together (no split-brain package provider situation).
-		Map<String, Version> highestMatchPerRequirement = new LinkedHashMap<>();
-		for (Map.Entry<String, String> requirement : BUNDLE_A_REQUIREMENTS.entrySet()) {
-			VersionRange range = new VersionRange(requirement.getValue());
-			Version highest = versionsOf(profile, requirement.getKey()).stream().filter(range::isIncluded)
-					.max(Comparator.naturalOrder()).orElse(null);
-			highestMatchPerRequirement.put(requirement.getKey(), highest);
-		}
-		Set<Version> distinctHighestVersions = new TreeSet<>(highestMatchPerRequirement.values());
-		assertEquals(
-				"test.bundle.a's own requirements resolve to inconsistent ASM versions: "
-						+ highestMatchPerRequirement
-						+ " - org.objectweb.asm.commons was not updated together with org.objectweb.asm/org.objectweb.asm.util",
-				1, distinctHighestVersions.size());
+		// What one would actually expect: the resulting profile must be something
+		// a real OSGi framework could actually resolve/wire together, i.e. it must
+		// not violate any package "uses" constraint
+		// (https://docs.osgi.org/specification/osgi.core/8.0.0/framework.module.html#i3127019).
+		// Rather than re-implementing that check ourselves with a simplified,
+		// necessarily incomplete heuristic, we hand the profile's IUs over to the
+		// real, standard OSGi resolver (see OsgiUsesOracle) and let it tell us
+		// authoritatively whether this is the case.
+		assertOsgiUsesConsistent("Profile after installing test.bundle.c is not OSGi-resolvable", profile);
 	}
 
 	/**
@@ -354,17 +386,6 @@ public class AsmMixedVersionTest extends AbstractProvisioningTest {
 		System.out.println("=== After fresh install of A+B+C (both ASM releases available) ===");
 		System.out.println(printAsmVersions(profile));
 
-		Map<String, Version> highestMatchPerRequirement = new LinkedHashMap<>();
-		for (Map.Entry<String, String> requirement : BUNDLE_A_REQUIREMENTS.entrySet()) {
-			VersionRange range = new VersionRange(requirement.getValue());
-			Version highest = versionsOf(profile, requirement.getKey()).stream().filter(range::isIncluded)
-					.max(Comparator.naturalOrder()).orElse(null);
-			highestMatchPerRequirement.put(requirement.getKey(), highest);
-		}
-		Set<Version> distinctHighestVersions = new TreeSet<>(highestMatchPerRequirement.values());
-		assertEquals(
-				"test.bundle.a's own requirements resolve to inconsistent ASM versions on a fresh install: "
-						+ highestMatchPerRequirement,
-				1, distinctHighestVersions.size());
+		assertOsgiUsesConsistent("Profile after fresh install of A+B+C is not OSGi-resolvable", profile);
 	}
 }
