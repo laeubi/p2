@@ -318,4 +318,53 @@ public class AsmMixedVersionTest extends AbstractProvisioningTest {
 						+ " - org.objectweb.asm.commons was not updated together with org.objectweb.asm/org.objectweb.asm.util",
 				1, distinctHighestVersions.size());
 	}
+
+	/**
+	 * EXPERIMENT: does a completely *fresh* install reproduce the same
+	 * inconsistency, with no update/upgrade step involved at all? Both ASM
+	 * releases (9.9.1 and 9.10.1) are made available from the very start, and
+	 * "test.bundle.a", "test.bundle.b" and "test.bundle.c" are all installed
+	 * together, as roots, in a single request against a brand new (empty)
+	 * profile.
+	 */
+	public void testAsmVersionsMixOnFreshInstall() throws ProvisionException {
+		IPlanner planner = getPlanner(getAgent());
+		IEngine engine = getEngine();
+
+		IInstallableUnit bundleA = createBundleA();
+		IInstallableUnit bundleB = createBundleB();
+		IInstallableUnit bundleC = createBundleC();
+		List<IInstallableUnit> repoContent = new ArrayList<>(createAsmRelease(ASM_9_9_1));
+		repoContent.addAll(createAsmRelease(ASM_9_10_1));
+		repoContent.add(bundleA);
+		repoContent.add(bundleB);
+		repoContent.add(bundleC);
+		createTestMetdataRepository(repoContent.toArray(IInstallableUnit[]::new));
+
+		IProfile profile = createProfile("AsmFreshInstallTestProfile");
+		IProfileChangeRequest request = planner.createChangeRequest(profile);
+		for (IInstallableUnit iu : new IInstallableUnit[] { bundleA, bundleB, bundleC }) {
+			request.add(iu);
+			request.setInstallableUnitInclusionRules(iu, ProfileInclusionRules.createStrictInclusionRule(iu));
+			request.setInstallableUnitProfileProperty(iu, IProfile.PROP_PROFILE_ROOT_IU, Boolean.TRUE.toString());
+		}
+		assertOK(performUnattended(request, planner, engine, getAgent()));
+
+		profile = getProfile(profile.getProfileId());
+		System.out.println("=== After fresh install of A+B+C (both ASM releases available) ===");
+		System.out.println(printAsmVersions(profile));
+
+		Map<String, Version> highestMatchPerRequirement = new LinkedHashMap<>();
+		for (Map.Entry<String, String> requirement : BUNDLE_A_REQUIREMENTS.entrySet()) {
+			VersionRange range = new VersionRange(requirement.getValue());
+			Version highest = versionsOf(profile, requirement.getKey()).stream().filter(range::isIncluded)
+					.max(Comparator.naturalOrder()).orElse(null);
+			highestMatchPerRequirement.put(requirement.getKey(), highest);
+		}
+		Set<Version> distinctHighestVersions = new TreeSet<>(highestMatchPerRequirement.values());
+		assertEquals(
+				"test.bundle.a's own requirements resolve to inconsistent ASM versions on a fresh install: "
+						+ highestMatchPerRequirement,
+				1, distinctHighestVersions.size());
+	}
 }
