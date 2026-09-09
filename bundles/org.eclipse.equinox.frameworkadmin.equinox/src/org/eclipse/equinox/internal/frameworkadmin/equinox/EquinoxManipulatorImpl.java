@@ -29,10 +29,10 @@ import org.eclipse.osgi.service.resolver.PlatformAdmin;
 import org.eclipse.osgi.util.NLS;
 import org.osgi.framework.*;
 import org.osgi.framework.startlevel.BundleStartLevel;
-import org.osgi.service.startlevel.StartLevel;
+import org.osgi.framework.startlevel.FrameworkStartLevel;
 import org.osgi.util.tracker.ServiceTracker;
 
-@SuppressWarnings({ "rawtypes", "unchecked", "deprecation" })
+@SuppressWarnings({ "rawtypes", "unchecked" })
 public class EquinoxManipulatorImpl implements Manipulator {
 	private static final long DEFAULT_LASTMODIFIED = 0L;
 	private static final boolean LOG_ILLEGALSTATEEXCEPTION = false;
@@ -126,7 +126,6 @@ public class EquinoxManipulatorImpl implements Manipulator {
 	ServiceTracker cmTracker;
 	int trackingCount = -1;
 	private final PlatformAdmin platformAdmin;
-	private final StartLevel startLevelService;
 
 	// private final boolean runtime;
 
@@ -134,12 +133,11 @@ public class EquinoxManipulatorImpl implements Manipulator {
 
 	EquinoxFwAdminImpl fwAdmin = null;
 
-	EquinoxManipulatorImpl(BundleContext context, EquinoxFwAdminImpl fwAdmin, PlatformAdmin admin, StartLevel slService,
+	EquinoxManipulatorImpl(BundleContext context, EquinoxFwAdminImpl fwAdmin, PlatformAdmin admin,
 			boolean runtime) {
 		this.context = context;
 		this.fwAdmin = fwAdmin;
 		this.platformAdmin = admin;
-		this.startLevelService = slService;
 		if (context != null) {
 			cmTracker = new ServiceTracker(context, ConfiguratorManipulator.class.getName(), null);
 			cmTracker.open();
@@ -373,8 +371,10 @@ public class EquinoxManipulatorImpl implements Manipulator {
 
 		// update initialBundleStartLevel
 		int initialBSL = configData.getInitialBundleStartLevel();
-		if (initialBSL != startLevelService.getInitialBundleStartLevel()) {
-			configData.setInitialBundleStartLevel(startLevelService.getInitialBundleStartLevel());
+		FrameworkStartLevel frameworkStartLevel = context.getBundle(Constants.SYSTEM_BUNDLE_ID)
+				.adapt(FrameworkStartLevel.class);
+		if (initialBSL != frameworkStartLevel.getInitialBundleStartLevel()) {
+			configData.setInitialBundleStartLevel(frameworkStartLevel.getInitialBundleStartLevel());
 		}
 	}
 

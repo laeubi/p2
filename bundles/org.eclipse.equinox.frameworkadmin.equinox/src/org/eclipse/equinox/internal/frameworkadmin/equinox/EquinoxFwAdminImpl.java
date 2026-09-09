@@ -22,7 +22,6 @@ import org.eclipse.equinox.internal.provisional.configuratormanipulator.Configur
 import org.eclipse.equinox.internal.provisional.frameworkadmin.*;
 import org.eclipse.osgi.service.resolver.PlatformAdmin;
 import org.osgi.framework.*;
-import org.osgi.service.startlevel.StartLevel;
 
 public class EquinoxFwAdminImpl implements FrameworkAdmin {
 
@@ -35,7 +34,6 @@ public class EquinoxFwAdminImpl implements FrameworkAdmin {
 	private boolean runningFw = false;
 
 	private PlatformAdmin platformAdmin;
-	private StartLevel startLevelService;
 
 	public EquinoxFwAdminImpl() {
 		this(null, false);
@@ -82,7 +80,7 @@ public class EquinoxFwAdminImpl implements FrameworkAdmin {
 
 	@Override
 	public Manipulator getManipulator() {
-		return new EquinoxManipulatorImpl(context, this, platformAdmin, startLevelService, false);
+		return new EquinoxManipulatorImpl(context, this, platformAdmin, false);
 	}
 
 	@Override
@@ -90,7 +88,7 @@ public class EquinoxFwAdminImpl implements FrameworkAdmin {
 		if (!this.runningFw) {
 			return null;
 		}
-		return new EquinoxManipulatorImpl(context, this, platformAdmin, startLevelService, true);
+		return new EquinoxManipulatorImpl(context, this, platformAdmin, true);
 	}
 
 	@Override
@@ -139,10 +137,6 @@ public class EquinoxFwAdminImpl implements FrameworkAdmin {
 
 	public void setPlatformAdmin(PlatformAdmin admin) {
 		this.platformAdmin = admin;
-	}
-
-	public void setStartLevel(StartLevel sl) {
-		this.startLevelService = sl;
 	}
 
 }
