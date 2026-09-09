@@ -41,6 +41,23 @@ public class EquinoxFwAdminImpl implements FrameworkAdmin {
 		this(null, false);
 	}
 
+	/**
+	 * Creates a standalone (non-OSGi-service-based) FrameworkAdmin that delegates
+	 * bundle list persistence (bundles.info) to the given configurator
+	 * manipulator, instead of looking one up via
+	 * {@link #loadConfiguratorManipulator(String)}/OSGi services. Useful for
+	 * callers that already have direct compile-time visibility to a
+	 * {@link ConfiguratorManipulator} implementation (e.g.
+	 * SimpleConfiguratorManipulatorImpl) and want to avoid both OSGi service
+	 * lookups and cross-bundle reflection.
+	 */
+	public EquinoxFwAdminImpl(ConfiguratorManipulator configuratorManipulator) {
+		this.context = null;
+		this.active = true;
+		this.runningFw = false;
+		this.configuratorManipulator = configuratorManipulator;
+	}
+
 	//	private String configuratorManipulatorFactoryName = null;
 
 	EquinoxFwAdminImpl(BundleContext context) {

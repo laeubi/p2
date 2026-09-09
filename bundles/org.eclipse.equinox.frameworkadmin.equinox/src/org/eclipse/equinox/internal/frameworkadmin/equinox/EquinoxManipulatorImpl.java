@@ -160,7 +160,7 @@ public class EquinoxManipulatorImpl implements Manipulator {
 
 	@Override
 	public BundlesState getBundlesState() throws FrameworkAdminRuntimeException {
-		if (context == null) {
+		if (context == null || platformAdmin == null) {
 			return new SimpleBundlesState(fwAdmin, this, EquinoxConstants.FW_SYMBOLIC_NAME);
 		}
 
@@ -384,7 +384,10 @@ public class EquinoxManipulatorImpl implements Manipulator {
 		loadWithoutFwPersistentData();
 
 		BundlesState bundlesState = null;
-		if (EquinoxBundlesState.checkFullySupported()) {
+		// No BundleContext (e.g. standalone/non-OSGi-service manipulator instance) or
+		// no PlatformAdmin service available: fall back to the simple, resolver-free
+		// implementation instead of failing with a NullPointerException below.
+		if (context != null && platformAdmin != null && EquinoxBundlesState.checkFullySupported()) {
 			bundlesState = new EquinoxBundlesState(context, fwAdmin, this, platformAdmin, !launcherData.isClean());
 			platformProperties = ((EquinoxBundlesState) bundlesState).getPlatformProperties();
 		} else {
