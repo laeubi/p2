@@ -16,26 +16,14 @@ package org.eclipse.equinox.internal.p2.touchpoint.eclipse;
 
 import java.io.IOException;
 import org.eclipse.equinox.frameworkadmin.BundleInfo;
-import org.eclipse.equinox.internal.frameworkadmin.equinox.EquinoxFwAdminImpl;
 import org.eclipse.equinox.internal.p2.core.helpers.LogHelper;
 import org.eclipse.equinox.internal.provisional.frameworkadmin.*;
-import org.eclipse.equinox.internal.simpleconfigurator.manipulator.SimpleConfiguratorManipulatorImpl;
 import org.eclipse.equinox.p2.core.IProvisioningAgent;
 import org.eclipse.equinox.p2.engine.IProfile;
 import org.osgi.framework.*;
 import org.osgi.util.tracker.ServiceTracker;
 
 public class LazyManipulator implements Manipulator {
-
-	/**
-	 * System property that, when set to {@code true}, restores the legacy
-	 * behavior of looking up the {@link FrameworkAdmin} OSGi service (which
-	 * requires the equinox fragment {@code org.eclipse.osgi.compatibility.state}
-	 * to be present to provide the {@code PlatformAdmin} service). By default this
-	 * lookup is skipped and {@link EquinoxFwAdminImpl} is instantiated directly,
-	 * see https://github.com/eclipse-equinox/p2/issues/1091.
-	 */
-	private static final String PROP_USE_FRAMEWORKADMIN_SERVICE = "org.eclipse.equinox.p2.touchpoint.eclipse.useFrameworkAdminService"; //$NON-NLS-1$
 
 	private final static String FILTER_OBJECTCLASS = "(" + Constants.OBJECTCLASS + '=' + FrameworkAdmin.class.getName() //$NON-NLS-1$
 			+ ')';
@@ -107,20 +95,6 @@ public class LazyManipulator implements Manipulator {
 	}
 
 	private static Manipulator getFrameworkManipulator() {
-		if (!Boolean.getBoolean(PROP_USE_FRAMEWORKADMIN_SERVICE)) {
-			// Default: skip the OSGi FrameworkAdmin service lookup (which requires the
-			// PlatformAdmin service, only available when the equinox fragment
-			// org.eclipse.osgi.compatibility.state is installed) and instantiate the
-			// framework admin implementation directly. See
-			// https://github.com/eclipse-equinox/p2/issues/1091
-			try {
-				return new EquinoxFwAdminImpl(new SimpleConfiguratorManipulatorImpl()).getManipulator();
-			} catch (LinkageError e) {
-				// org.eclipse.equinox.frameworkadmin.equinox is not available at all; fall
-				// through to the OSGi-service-based lookup below.
-				LogHelper.log(Util.createError(Messages.error_loading_manipulator + ' ' + e.getMessage()));
-			}
-		}
 		FrameworkAdmin fwAdmin = getFrameworkAdmin();
 		if (fwAdmin != null) {
 			return fwAdmin.getManipulator();

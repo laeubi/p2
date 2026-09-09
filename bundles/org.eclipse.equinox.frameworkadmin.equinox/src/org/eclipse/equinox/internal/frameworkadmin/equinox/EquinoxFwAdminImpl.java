@@ -20,7 +20,6 @@ import java.util.Dictionary;
 import org.eclipse.equinox.internal.provisional.configuratormanipulator.ConfiguratorManipulator;
 import org.eclipse.equinox.internal.provisional.configuratormanipulator.ConfiguratorManipulatorFactory;
 import org.eclipse.equinox.internal.provisional.frameworkadmin.*;
-import org.eclipse.osgi.service.resolver.PlatformAdmin;
 import org.osgi.framework.*;
 import org.osgi.service.startlevel.StartLevel;
 
@@ -34,28 +33,10 @@ public class EquinoxFwAdminImpl implements FrameworkAdmin {
 
 	private boolean runningFw = false;
 
-	private PlatformAdmin platformAdmin;
 	private StartLevel startLevelService;
 
 	public EquinoxFwAdminImpl() {
 		this(null, false);
-	}
-
-	/**
-	 * Creates a standalone (non-OSGi-service-based) FrameworkAdmin that delegates
-	 * bundle list persistence (bundles.info) to the given configurator
-	 * manipulator, instead of looking one up via
-	 * {@link #loadConfiguratorManipulator(String)}/OSGi services. Useful for
-	 * callers that already have direct compile-time visibility to a
-	 * {@link ConfiguratorManipulator} implementation (e.g.
-	 * SimpleConfiguratorManipulatorImpl) and want to avoid both OSGi service
-	 * lookups and cross-bundle reflection.
-	 */
-	public EquinoxFwAdminImpl(ConfiguratorManipulator configuratorManipulator) {
-		this.context = null;
-		this.active = true;
-		this.runningFw = false;
-		this.configuratorManipulator = configuratorManipulator;
 	}
 
 	//	private String configuratorManipulatorFactoryName = null;
@@ -99,7 +80,7 @@ public class EquinoxFwAdminImpl implements FrameworkAdmin {
 
 	@Override
 	public Manipulator getManipulator() {
-		return new EquinoxManipulatorImpl(context, this, platformAdmin, startLevelService, false);
+		return new EquinoxManipulatorImpl(context, this, startLevelService, false);
 	}
 
 	@Override
@@ -107,7 +88,7 @@ public class EquinoxFwAdminImpl implements FrameworkAdmin {
 		if (!this.runningFw) {
 			return null;
 		}
-		return new EquinoxManipulatorImpl(context, this, platformAdmin, startLevelService, true);
+		return new EquinoxManipulatorImpl(context, this, startLevelService, true);
 	}
 
 	@Override
@@ -152,10 +133,6 @@ public class EquinoxFwAdminImpl implements FrameworkAdmin {
 			this.configuratorManipulator = ConfiguratorManipulatorFactory.getInstance(configuratorManipulatorFactoryName);
 		}
 		return;
-	}
-
-	public void setPlatformAdmin(PlatformAdmin admin) {
-		this.platformAdmin = admin;
 	}
 
 	public void setStartLevel(StartLevel sl) {
